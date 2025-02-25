@@ -285,3 +285,27 @@ pdfjs-web-fonts-disabled = Wab fonts are disabled: cannae yaise embeddit PDF fon
 
 ## "Annotations removed" bar
 
+
+## Add a signature dialog
+
+
+## Tab names
+
+
+## Tab panels
+
+
+## Controls
+
+
+## Dialog buttons
+
+
+## Main menu for adding/removing signatures
+
+
+## Editor toolbar
+
+
+## Edit signature description dialog
+
