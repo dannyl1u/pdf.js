@@ -13,12 +13,7 @@
  * limitations under the License.
  */
 
-import {
-  AnnotationBorderStyleType,
-  AnnotationType,
-  createValidAbsoluteUrl,
-  Util,
-} from "pdfjs-lib";
+import { AnnotationType, createValidAbsoluteUrl, Util } from "pdfjs-lib";
 import { getOriginalIndex, normalize } from "./pdf_find_controller.js";
 
 function DOMRectToPDF({ width, height, left, top }, pdfPageView) {
@@ -89,15 +84,9 @@ function createLinkAnnotation({ url, index, length }, pdfPageView, id) {
     annotationType: AnnotationType.LINK,
     rotation: 0,
     ...calculateLinkPosition(range, pdfPageView),
-    // This is just the default for AnnotationBorderStyle.
-    borderStyle: {
-      width: 1,
-      rawWidth: 1,
-      style: AnnotationBorderStyleType.SOLID,
-      dashArray: [3],
-      horizontalCornerRadius: 0,
-      verticalCornerRadius: 0,
-    },
+    // Populated in the annotationLayer to avoid unnecessary object creation,
+    // since most inferred links overlap existing LinkAnnotations:
+    borderStyle: null,
   };
 }
 
@@ -107,31 +96,37 @@ class Autolinker {
   static #regex;
 
   static findLinks(text) {
-    // Regex can be tested and verified at https://regex101.com/r/zgDwPE/1.
+    // Regex can be tested and verified at https://regex101.com/r/rXoLiT/2.
     this.#regex ??=
-      /\b(?:https?:\/\/|mailto:|www\.)(?:[[\S--\[]--\p{P}]|\/|[\p{P}--\[]+[[\S--\[]--\p{P}])+|\b[[\S--@]--\{]+@[\S--.]+\.[[\S--\[]--\p{P}]{2,}/gmv;
+      /\b(?:https?:\/\/|mailto:|www\.)(?:[\S--[\p{P}<>]]|\/|[\S--[\[\]]]+[\S--[\p{P}<>]])+|\b[\S--[@\p{Ps}\p{Pe}<>]]+@([\S--[\p{P}<>]]+(?:\.[\S--[\p{P}<>]]+)+)/gmv;
 
     const [normalizedText, diffs] = normalize(text);
     const matches = normalizedText.matchAll(this.#regex);
     const links = [];
     for (const match of matches) {
-      const raw =
-        match[0].startsWith("www.") ||
-        match[0].startsWith("mailto:") ||
-        match[0].startsWith("http://") ||
-        match[0].startsWith("https://")
-          ? match[0]
-          : `mailto:${match[0]}`;
-      const url = createValidAbsoluteUrl(raw, null, {
+      const [url, emailDomain] = match;
+      let raw;
+      if (
+        url.startsWith("www.") ||
+        url.startsWith("http://") ||
+        url.startsWith("https://")
+      ) {
+        raw = url;
+      } else if (URL.canParse(`http://${emailDomain}`)) {
+        raw = url.startsWith("mailto:") ? url : `mailto:${url}`;
+      } else {
+        continue;
+      }
+      const absoluteURL = createValidAbsoluteUrl(raw, null, {
         addDefaultProtocol: true,
       });
-      if (url) {
+      if (absoluteURL) {
         const [index, length] = getOriginalIndex(
           diffs,
           match.index,
-          match[0].length
+          url.length
         );
-        links.push({ url: url.href, index, length });
+        links.push({ url: absoluteURL.href, index, length });
       }
     }
     return links;

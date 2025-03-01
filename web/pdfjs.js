@@ -15,7 +15,6 @@
 
 const {
   AbortException,
-  AnnotationBorderStyleType,
   AnnotationEditorLayer,
   AnnotationEditorParamsType,
   AnnotationEditorType,
@@ -33,6 +32,7 @@ const {
   getDocument,
   getFilenameFromUrl,
   getPdfFilenameFromUrl,
+  getUuid,
   getXfaPageViewport,
   GlobalWorkerOptions,
   ImageKind,
@@ -53,6 +53,7 @@ const {
   ResponseException,
   setLayerDimensions,
   shadow,
+  SignatureExtractor,
   stopEvent,
   SupportedImageMimeTypes,
   TextLayer,
@@ -65,7 +66,6 @@ const {
 
 export {
   AbortException,
-  AnnotationBorderStyleType,
   AnnotationEditorLayer,
   AnnotationEditorParamsType,
   AnnotationEditorType,
@@ -83,6 +83,7 @@ export {
   getDocument,
   getFilenameFromUrl,
   getPdfFilenameFromUrl,
+  getUuid,
   getXfaPageViewport,
   GlobalWorkerOptions,
   ImageKind,
@@ -103,6 +104,7 @@ export {
   ResponseException,
   setLayerDimensions,
   shadow,
+  SignatureExtractor,
   stopEvent,
   SupportedImageMimeTypes,
   TextLayer,

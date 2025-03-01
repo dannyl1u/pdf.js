@@ -200,6 +200,11 @@ const defaultOptions = {
     value: typeof PDFJSDev === "undefined" || PDFJSDev.test("MOZCENTRAL"),
     kind: OptionKind.VIEWER + OptionKind.PREFERENCE,
   },
+  enableDetailCanvas: {
+    /** @type {boolean} */
+    value: true,
+    kind: OptionKind.VIEWER,
+  },
   enableGuessAltText: {
     /** @type {boolean} */
     value: true,
@@ -327,6 +332,11 @@ const defaultOptions = {
   textLayerMode: {
     /** @type {number} */
     value: 1,
+    kind: OptionKind.VIEWER + OptionKind.PREFERENCE,
+  },
+  viewerCssTheme: {
+    /** @type {number} */
+    value: typeof PDFJSDev !== "undefined" && PDFJSDev.test("CHROME") ? 2 : 0,
     kind: OptionKind.VIEWER + OptionKind.PREFERENCE,
   },
   viewOnLoad: {
@@ -483,11 +493,6 @@ if (typeof PDFJSDev === "undefined" || !PDFJSDev.test("MOZCENTRAL")) {
         ? "../build/dev-sandbox/pdf.sandbox.mjs"
         : "../build/pdf.sandbox.mjs",
     kind: OptionKind.VIEWER,
-  };
-  defaultOptions.viewerCssTheme = {
-    /** @type {number} */
-    value: typeof PDFJSDev !== "undefined" && PDFJSDev.test("CHROME") ? 2 : 0,
-    kind: OptionKind.VIEWER + OptionKind.PREFERENCE,
   };
   defaultOptions.enableFakeMLManager = {
     /** @type {boolean} */
