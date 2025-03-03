@@ -651,10 +651,17 @@ function createStandardFontBundle() {
 
 function createWasmBundle() {
   return ordered([
-    gulp.src(["external/openjpeg/*.wasm", "external/openjpeg/LICENSE_*"], {
-      base: "external/openjpeg",
-      encoding: false,
-    }),
+    gulp.src(
+      [
+        "external/openjpeg/*.wasm",
+        "external/openjpeg/openjpeg_nowasm_fallback.js",
+        "external/openjpeg/LICENSE_*",
+      ],
+      {
+        base: "external/openjpeg",
+        encoding: false,
+      }
+    ),
   ]);
 }
 
@@ -1424,6 +1431,7 @@ gulp.task(
           .pipe(
             postcss([
               discardCommentsCSS(),
+              postcssDarkThemeClass(),
               autoprefixer(MOZCENTRAL_AUTOPREFIXER_CONFIG),
             ])
           )
@@ -1434,6 +1442,7 @@ gulp.task(
           .pipe(
             postcss([
               discardCommentsCSS(),
+              postcssDarkThemeClass(),
               autoprefixer(MOZCENTRAL_AUTOPREFIXER_CONFIG),
             ])
           )
@@ -2290,7 +2299,7 @@ function packageJson() {
     bugs: DIST_BUGS_URL,
     license: DIST_LICENSE,
     optionalDependencies: {
-      "@napi-rs/canvas": "^0.1.65",
+      "@napi-rs/canvas": "^0.1.67",
     },
     browser: {
       canvas: false,

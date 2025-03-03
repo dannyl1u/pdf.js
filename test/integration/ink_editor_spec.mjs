@@ -15,8 +15,8 @@
 
 import {
   awaitPromise,
+  clearEditors,
   closePages,
-  createPromise,
   dragAndDrop,
   getAnnotationSelector,
   getEditors,
@@ -25,37 +25,25 @@ import {
   getSerialized,
   isCanvasWhite,
   kbRedo,
-  kbSelectAll,
   kbUndo,
   loadAndWait,
+  moveEditor,
   scrollIntoView,
   selectEditor,
+  selectEditors,
   switchToEditor,
   waitForAnnotationModeChanged,
   waitForNoElement,
+  waitForPointerUp,
   waitForSelectedEditor,
   waitForSerialized,
   waitForStorageEntries,
   waitForTimeout,
 } from "./test_utils.mjs";
 
-const waitForPointerUp = page =>
-  createPromise(page, resolve => {
-    window.addEventListener("pointerup", resolve, { once: true });
-  });
+const selectAll = selectEditors.bind(null, "ink");
 
-const selectAll = async page => {
-  await kbSelectAll(page);
-  await page.waitForFunction(
-    () => !document.querySelector(".inkEditor.disabled:not(.selectedEditor)")
-  );
-};
-
-const clearAll = async page => {
-  await selectAll(page);
-  await page.keyboard.press("Backspace");
-  await waitForStorageEntries(page, 0);
-};
+const clearAll = clearEditors.bind(null, "ink");
 
 const commit = async page => {
   await page.keyboard.press("Escape");
@@ -144,6 +132,50 @@ describe("Ink Editor", () => {
           expect(Math.round(rectBefore.y))
             .withContext(`In ${browserName}`)
             .toEqual(Math.round(rectAfter.y));
+        })
+      );
+    });
+
+    it("must draw and move with the keyboard", async () => {
+      await Promise.all(
+        pages.map(async ([browserName, page]) => {
+          await switchToInk(page);
+
+          const rect = await getRect(page, ".annotationEditorLayer");
+
+          const x = rect.x + 100;
+          const y = rect.y + 100;
+          const clickHandle = await waitForPointerUp(page);
+          await page.mouse.move(x, y);
+          await page.mouse.down();
+          await page.mouse.move(x + 50, y + 50);
+          await page.mouse.up();
+          await awaitPromise(clickHandle);
+
+          await commit(page);
+
+          const editorSelector = getEditorSelector(0);
+          await page.waitForSelector(editorSelector);
+          const rectBefore = (await getSerialized(page, s => s.rect))[0];
+
+          const N = 20;
+          await moveEditor(page, editorSelector, N, () =>
+            page.keyboard.press("ArrowDown")
+          );
+          const rectAfter = (await getSerialized(page, s => s.rect))[0];
+
+          expect(Math.abs(rectBefore[0] - rectAfter[0]))
+            .withContext(`In ${browserName}`)
+            .toBeLessThan(1e-2);
+          expect(Math.abs(rectBefore[1] - N - rectAfter[1]))
+            .withContext(`In ${browserName}`)
+            .toBeLessThan(1e-2);
+          expect(Math.abs(rectBefore[2] - rectAfter[2]))
+            .withContext(`In ${browserName}`)
+            .toBeLessThan(1e-2);
+          expect(Math.abs(rectBefore[3] - N - rectAfter[3]))
+            .withContext(`In ${browserName}`)
+            .toBeLessThan(1e-2);
         })
       );
     });

@@ -502,3 +502,27 @@ pdfjs-editor-undo-bar-undo-button-label = Angre
 pdfjs-editor-undo-bar-close-button =
     .title = Lukk
 pdfjs-editor-undo-bar-close-button-label = Lukk
+
+## Add a signature dialog
+
+
+## Tab names
+
+
+## Tab panels
+
+
+## Controls
+
+
+## Dialog buttons
+
+
+## Main menu for adding/removing signatures
+
+
+## Editor toolbar
+
+
+## Edit signature description dialog
+

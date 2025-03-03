@@ -278,3 +278,27 @@ pdfjs-web-fonts-disabled = Necowe fōnty sōm zastawiōne: niy idzie użyć wklu
 
 ## "Annotations removed" bar
 
+
+## Add a signature dialog
+
+
+## Tab names
+
+
+## Tab panels
+
+
+## Controls
+
+
+## Dialog buttons
+
+
+## Main menu for adding/removing signatures
+
+
+## Editor toolbar
+
+
+## Edit signature description dialog
+
