@@ -412,35 +412,28 @@ function createValidAbsoluteUrl(url, baseUrl = null, options = null) {
   if (!url) {
     return null;
   }
-  try {
-    if (options && typeof url === "string") {
-      // Let URLs beginning with "www." default to using the "http://" protocol.
-      if (options.addDefaultProtocol && url.startsWith("www.")) {
-        const dots = url.match(/\./g);
-        // Avoid accidentally matching a *relative* URL pointing to a file named
-        // e.g. "www.pdf" or similar.
-        if (dots?.length >= 2) {
-          url = `http://${url}`;
-        }
-      }
-
-      // According to ISO 32000-1:2008, section 12.6.4.7, URIs should be encoded
-      // in 7-bit ASCII. Some bad PDFs use UTF-8 encoding; see bug 1122280.
-      if (options.tryConvertEncoding) {
-        try {
-          url = stringToUTF8String(url);
-        } catch {}
+  if (options && typeof url === "string") {
+    // Let URLs beginning with "www." default to using the "http://" protocol.
+    if (options.addDefaultProtocol && url.startsWith("www.")) {
+      const dots = url.match(/\./g);
+      // Avoid accidentally matching a *relative* URL pointing to a file named
+      // e.g. "www.pdf" or similar.
+      if (dots?.length >= 2) {
+        url = `http://${url}`;
       }
     }
 
-    const absoluteUrl = baseUrl ? new URL(url, baseUrl) : new URL(url);
-    if (_isValidProtocol(absoluteUrl)) {
-      return absoluteUrl;
+    // According to ISO 32000-1:2008, section 12.6.4.7, URIs should be encoded
+    // in 7-bit ASCII. Some bad PDFs use UTF-8 encoding; see bug 1122280.
+    if (options.tryConvertEncoding) {
+      try {
+        url = stringToUTF8String(url);
+      } catch {}
     }
-  } catch {
-    /* `new URL()` will throw on incorrect data. */
   }
-  return null;
+
+  const absoluteUrl = baseUrl ? URL.parse(url, baseUrl) : URL.parse(url);
+  return _isValidProtocol(absoluteUrl) ? absoluteUrl : null;
 }
 
 function shadow(obj, prop, value, nonSerializable = false) {
@@ -1087,6 +1080,54 @@ function getUuid() {
 
 const AnnotationPrefix = "pdfjs_internal_id_";
 
+function _isValidExplicitDest(validRef, validName, dest) {
+  if (!Array.isArray(dest) || dest.length < 2) {
+    return false;
+  }
+  const [page, zoom, ...args] = dest;
+  if (!validRef(page) && !Number.isInteger(page)) {
+    return false;
+  }
+  if (!validName(zoom)) {
+    return false;
+  }
+  const argsLen = args.length;
+  let allowNull = true;
+  switch (zoom.name) {
+    case "XYZ":
+      if (argsLen < 2 || argsLen > 3) {
+        return false;
+      }
+      break;
+    case "Fit":
+    case "FitB":
+      return argsLen === 0;
+    case "FitH":
+    case "FitBH":
+    case "FitV":
+    case "FitBV":
+      if (argsLen > 1) {
+        return false;
+      }
+      break;
+    case "FitR":
+      if (argsLen !== 4) {
+        return false;
+      }
+      allowNull = false;
+      break;
+    default:
+      return false;
+  }
+  for (const arg of args) {
+    if (typeof arg === "number" || (allowNull && arg === null)) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
+
 // TODO: Remove this once `Uint8Array.prototype.toHex` is generally available.
 function toHexUtil(arr) {
   if (Uint8Array.prototype.toHex) {
@@ -1126,6 +1167,7 @@ if (
 }
 
 export {
+  _isValidExplicitDest,
   AbortException,
   AnnotationActionEventType,
   AnnotationBorderStyleType,

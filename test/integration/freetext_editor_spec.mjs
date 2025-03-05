@@ -15,6 +15,7 @@
 
 import {
   awaitPromise,
+  clearEditors,
   closePages,
   copy,
   copyToClipboard,
@@ -37,18 +38,18 @@ import {
   kbModifierDown,
   kbModifierUp,
   kbRedo,
-  kbSelectAll,
   kbUndo,
   loadAndWait,
+  moveEditor,
   paste,
   pasteFromClipboard,
   scrollIntoView,
   selectEditor,
+  selectEditors,
   switchToEditor,
   unselectEditor,
   waitForAnnotationEditorLayer,
   waitForAnnotationModeChanged,
-  waitForEditorMovedInDOM,
   waitForSelectedEditor,
   waitForSerialized,
   waitForStorageEntries,
@@ -57,20 +58,9 @@ import {
 } from "./test_utils.mjs";
 import { PNG } from "pngjs";
 
-const selectAll = async page => {
-  await kbSelectAll(page);
-  await page.waitForFunction(
-    () => !document.querySelector(".freeTextEditor:not(.selectedEditor)")
-  );
-};
+const selectAll = selectEditors.bind(null, "freeText");
 
-const clearAll = async page => {
-  await selectAll(page);
-  await page.keyboard.down("Control");
-  await page.keyboard.press("Backspace");
-  await page.keyboard.up("Control");
-  await waitForStorageEntries(page, 0);
-};
+const clearAll = clearEditors.bind(null, "freeText");
 
 const commit = async page => {
   await page.keyboard.press("Escape");
@@ -78,33 +68,6 @@ const commit = async page => {
 };
 
 const switchToFreeText = switchToEditor.bind(null, "FreeText");
-
-const getXY = async (page, selector) => {
-  const rect = await getRect(page, selector);
-  return `${rect.x}::${rect.y}`;
-};
-
-const waitForPositionChange = (page, selector, xy) =>
-  page.waitForFunction(
-    (sel, currentXY) => {
-      const bbox = document.querySelector(sel).getBoundingClientRect();
-      return `${bbox.x}::${bbox.y}` !== currentXY;
-    },
-    {},
-    selector,
-    xy
-  );
-
-const moveEditor = async (page, selector, n, pressKey) => {
-  let xy = await getXY(page, selector);
-  for (let i = 0; i < n; i++) {
-    const handle = await waitForEditorMovedInDOM(page);
-    await pressKey();
-    await awaitPromise(handle);
-    await waitForPositionChange(page, selector, xy);
-    xy = await getXY(page, selector);
-  }
-};
 
 const cancelFocusIn = async (page, selector) => {
   page.evaluate(sel => {

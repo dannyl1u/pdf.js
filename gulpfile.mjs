@@ -387,6 +387,7 @@ function createWebpackConfig(
       parser: {
         javascript: {
           importMeta: false,
+          url: false,
         },
       },
       rules: [
@@ -651,8 +652,19 @@ function createStandardFontBundle() {
 
 function createWasmBundle() {
   return ordered([
-    gulp.src(["external/openjpeg/*.wasm", "external/openjpeg/LICENSE_*"], {
-      base: "external/openjpeg",
+    gulp.src(
+      [
+        "external/openjpeg/*.wasm",
+        "external/openjpeg/openjpeg_nowasm_fallback.js",
+        "external/openjpeg/LICENSE_*",
+      ],
+      {
+        base: "external/openjpeg",
+        encoding: false,
+      }
+    ),
+    gulp.src(["external/qcms/*.wasm", "external/qcms/LICENSE_*"], {
+      base: "external/qcms",
       encoding: false,
     }),
   ]);
@@ -1424,6 +1436,7 @@ gulp.task(
           .pipe(
             postcss([
               discardCommentsCSS(),
+              postcssDarkThemeClass(),
               autoprefixer(MOZCENTRAL_AUTOPREFIXER_CONFIG),
             ])
           )
@@ -1434,6 +1447,7 @@ gulp.task(
           .pipe(
             postcss([
               discardCommentsCSS(),
+              postcssDarkThemeClass(),
               autoprefixer(MOZCENTRAL_AUTOPREFIXER_CONFIG),
             ])
           )
@@ -1649,6 +1663,7 @@ function buildLib(defines, dir) {
     }),
     gulp.src("test/unit/*.js", { base: ".", encoding: false }),
     gulp.src("external/openjpeg/*.js", { base: "openjpeg/", encoding: false }),
+    gulp.src("external/qcms/*.js", { base: "qcms/", encoding: false }),
   ]);
 
   return buildLibHelper(bundleDefines, inputStream, dir);
@@ -2130,7 +2145,7 @@ gulp.task(
     },
     function watchWasm() {
       gulp.watch(
-        "external/openjpeg/*",
+        ["external/openjpeg/*", "external/qcms/*"],
         { ignoreInitial: false },
         gulp.series("dev-wasm")
       );
@@ -2290,7 +2305,7 @@ function packageJson() {
     bugs: DIST_BUGS_URL,
     license: DIST_LICENSE,
     optionalDependencies: {
-      "@napi-rs/canvas": "^0.1.65",
+      "@napi-rs/canvas": "^0.1.67",
     },
     browser: {
       canvas: false,

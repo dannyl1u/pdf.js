@@ -30,7 +30,7 @@ import {
   MissingDataException,
 } from "./core_utils.js";
 import { BaseStream } from "./base_stream.js";
-import { ColorSpace } from "./colorspace.js";
+import { ColorSpaceUtils } from "./colorspace_utils.js";
 
 const ShadingType = {
   FUNCTION_BASED: 1,
@@ -52,6 +52,7 @@ class Pattern {
     xref,
     res,
     pdfFunctionFactory,
+    globalColorSpaceCache,
     localColorSpaceCache
   ) {
     const dict = shading instanceof BaseStream ? shading.dict : shading;
@@ -66,6 +67,7 @@ class Pattern {
             xref,
             res,
             pdfFunctionFactory,
+            globalColorSpaceCache,
             localColorSpaceCache
           );
         case ShadingType.FREE_FORM_MESH:
@@ -77,6 +79,7 @@ class Pattern {
             xref,
             res,
             pdfFunctionFactory,
+            globalColorSpaceCache,
             localColorSpaceCache
           );
         default:
@@ -114,7 +117,14 @@ class BaseShading {
 // Radial and axial shading have very similar implementations
 // If needed, the implementations can be broken into two classes.
 class RadialAxialShading extends BaseShading {
-  constructor(dict, xref, resources, pdfFunctionFactory, localColorSpaceCache) {
+  constructor(
+    dict,
+    xref,
+    resources,
+    pdfFunctionFactory,
+    globalColorSpaceCache,
+    localColorSpaceCache
+  ) {
     super();
     this.shadingType = dict.get("ShadingType");
     let coordsLen = 0;
@@ -127,11 +137,12 @@ class RadialAxialShading extends BaseShading {
     if (!isNumberArray(this.coordsArr, coordsLen)) {
       throw new FormatError("RadialAxialShading: Invalid /Coords array.");
     }
-    const cs = ColorSpace.parse({
+    const cs = ColorSpaceUtils.parse({
       cs: dict.getRaw("CS") || dict.getRaw("ColorSpace"),
       xref,
       resources,
       pdfFunctionFactory,
+      globalColorSpaceCache,
       localColorSpaceCache,
     });
     this.bbox = lookupNormalRect(dict.getArray("BBox"), null);
@@ -452,6 +463,7 @@ class MeshShading extends BaseShading {
     xref,
     resources,
     pdfFunctionFactory,
+    globalColorSpaceCache,
     localColorSpaceCache
   ) {
     super();
@@ -461,11 +473,12 @@ class MeshShading extends BaseShading {
     const dict = stream.dict;
     this.shadingType = dict.get("ShadingType");
     this.bbox = lookupNormalRect(dict.getArray("BBox"), null);
-    const cs = ColorSpace.parse({
+    const cs = ColorSpaceUtils.parse({
       cs: dict.getRaw("CS") || dict.getRaw("ColorSpace"),
       xref,
       resources,
       pdfFunctionFactory,
+      globalColorSpaceCache,
       localColorSpaceCache,
     });
     this.background = dict.has("Background")
